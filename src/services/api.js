@@ -4,7 +4,7 @@ import axios from "axios"
 let authToken = null
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://attendance-system-server-blue.vercel.app",
 })
 
 // Function to set the token after login and store in sessionStorage
