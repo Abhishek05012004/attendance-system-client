@@ -5,6 +5,8 @@ import { useAuth } from "../context/AuthContext"
 import { toast } from "react-toastify"
 import { Calendar, Plus, Clock, CheckCircle, XCircle, AlertCircle, Users, UserX } from "lucide-react"
 import API from "../services/api"
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
 
 export default function LeaveManagement() {
   const { user, isAdmin } = useAuth()
@@ -18,7 +20,7 @@ export default function LeaveManagement() {
   const [loading, setLoading] = useState(true)
   const [loadingEmployeesOnLeave, setLoadingEmployeesOnLeave] = useState(false)
   const [showRequestForm, setShowRequestForm] = useState(false)
-  const [selectedDate, setSelectedDate] = useState("")
+  const [selectedDate, setSelectedDate] = useState(new Date())
   const [newLeave, setNewLeave] = useState({
     leaveType: "",
     startDate: "",
@@ -48,7 +50,7 @@ export default function LeaveManagement() {
 
   useEffect(() => {
     // Set default date to today
-    setSelectedDate(getTodaysDate())
+    setSelectedDate(new Date())
   }, [])
 
   useEffect(() => {
@@ -109,6 +111,21 @@ export default function LeaveManagement() {
 
   const handleSubmitLeave = async (e) => {
     e.preventDefault()
+    const start = parseYMD(newLeave.startDate)
+    const end = parseYMD(newLeave.endDate)
+    const todayOnly = todayDateOnly()
+    if (!start || !end) {
+      toast.error("Please select both start and end dates")
+      return
+    }
+    if (start < todayOnly) {
+      toast.error("Start date cannot be in the past")
+      return
+    }
+    if (end < start) {
+      toast.error("End date cannot be before start date")
+      return
+    }
     try {
       await API.post("/leave/request", newLeave)
       toast.success("Leave request submitted successfully!")
@@ -144,7 +161,7 @@ export default function LeaveManagement() {
   }
 
   const resetToToday = () => {
-    setSelectedDate(getTodaysDate())
+    setSelectedDate(new Date())
   }
 
   const getStatusBadge = (status) => {
@@ -183,12 +200,29 @@ export default function LeaveManagement() {
     )
   }
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date) => {
+    return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
     })
+  }
+
+  const toYMD = (date) => {
+    if (!date) return ""
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, "0")
+    const d = String(date.getDate()).padStart(2, "0")
+    return `${y}-${m}-${d}`
+  }
+  const parseYMD = (str) => {
+    if (!str) return null
+    const [y, m, d] = str.split("-").map(Number)
+    return new Date(y, (m || 1) - 1, d || 1, 0, 0, 0, 0)
+  }
+  const todayDateOnly = () => {
+    const now = new Date()
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
   }
 
   return (
@@ -261,12 +295,11 @@ export default function LeaveManagement() {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <label className="text-sm font-medium text-gray-700">Select Date:</label>
-                  <input
-                    type="date"
+                  <DatePicker
+                    selected={selectedDate}
+                    onChange={handleDateChange}
+                    dateFormat="yyyy-MM-dd"
                     className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white text-sm"
-                    style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                    value={selectedDate}
-                    onChange={(e) => handleDateChange(e.target.value)}
                   />
                   <button
                     onClick={resetToToday}
@@ -331,7 +364,7 @@ export default function LeaveManagement() {
                         <td className="px-6 py-4 whitespace-nowrap">{getLeaveTypeBadge(leave.leaveType)}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
+                            {formatDate(new Date(leave.startDate))} - {formatDate(new Date(leave.endDate))}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -386,23 +419,40 @@ export default function LeaveManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-                <input
-                  type="date"
-                  required
+                <DatePicker
+                  selected={parseYMD(newLeave.startDate)}
+                  onChange={(date) => {
+                    if (!date) return
+                    const startStr = toYMD(date)
+                    setNewLeave((prev) => {
+                      const endObj = parseYMD(prev.endDate)
+                      const adjustedEnd = endObj && endObj < date ? startStr : prev.endDate
+                      return { ...prev, startDate: startStr, endDate: adjustedEnd }
+                    })
+                  }}
+                  minDate={todayDateOnly()}
+                  dateFormat="yyyy-MM-dd"
+                  placeholderText="yyyy-mm-dd"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newLeave.startDate}
-                  onChange={(e) => setNewLeave({ ...newLeave, startDate: e.target.value })}
+                  withPortal
+                  popperPlacement="bottom-start"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-                <input
-                  type="date"
-                  required
+                <DatePicker
+                  selected={parseYMD(newLeave.endDate)}
+                  onChange={(date) => {
+                    if (!date) return
+                    setNewLeave((prev) => ({ ...prev, endDate: toYMD(date) }))
+                  }}
+                  minDate={newLeave.startDate ? parseYMD(newLeave.startDate) : todayDateOnly()}
+                  dateFormat="yyyy-MM-dd"
+                  placeholderText="yyyy-mm-dd"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={newLeave.endDate}
-                  onChange={(e) => setNewLeave({ ...newLeave, endDate: e.target.value })}
+                  withPortal
+                  popperPlacement="bottom-start"
                 />
               </div>
 
@@ -500,7 +550,7 @@ export default function LeaveManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">{getLeaveTypeBadge(leave.leaveType)}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
-                        {formatDate(leave.startDate)} - {formatDate(leave.endDate)}
+                        {formatDate(new Date(leave.startDate))} - {formatDate(new Date(leave.endDate))}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
