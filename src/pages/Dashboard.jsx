@@ -80,11 +80,24 @@ export default function Dashboard() {
     try {
       const location = await getLocation()
       const payload = {}
+
+      const clientNow = new Date()
+      payload.clientTimestamp = clientNow.getTime()
       if (location) {
         payload.location = location
       }
 
+      console.log("[v0] Check-in initiated at client local time:", clientNow.toLocaleString())
+
       const response = await API.post("/attendance/checkin", payload)
+
+      console.log(
+        "[v0] Check-in saved as:",
+        response.data?.attendance?.checkIn,
+        "on date:",
+        response.data?.attendance?.date,
+      )
+
       toast.success("Checked in successfully!")
       fetchAttendanceStatus()
     } catch (err) {
@@ -104,11 +117,24 @@ export default function Dashboard() {
     try {
       const location = await getLocation()
       const payload = {}
+
+      const clientNow = new Date()
+      payload.clientTimestamp = clientNow.getTime()
       if (location) {
         payload.location = location
       }
 
+      console.log("[v0] Check-out initiated at client local time:", clientNow.toLocaleString())
+
       const response = await API.post("/attendance/checkout", payload)
+
+      console.log(
+        "[v0] Check-out saved as:",
+        response.data?.attendance?.checkOut,
+        "on date:",
+        response.data?.attendance?.date,
+      )
+
       toast.success("Checked out successfully!")
       fetchAttendanceStatus()
       fetchStats()
@@ -178,7 +204,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold">{formatTime()}</div>
+            <div className="text-3xl font-bold">{formatTime(currentTime)}</div>
             <div className="text-blue-100">{formatDate(currentTime)}</div>
           </div>
         </div>
