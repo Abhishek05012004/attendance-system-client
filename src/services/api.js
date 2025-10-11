@@ -39,6 +39,13 @@ API.interceptors.request.use((req) => {
   if (token) {
     req.headers.Authorization = `Bearer ${token}`
   }
+  try {
+    // Minutes difference from UTC. IST => -330, PST => 480, etc.
+    const tzOffsetMinutes = new Date().getTimezoneOffset()
+    req.headers["x-tz-offset-minutes"] = String(tzOffsetMinutes)
+  } catch {
+    // noop if not available
+  }
   return req
 })
 
