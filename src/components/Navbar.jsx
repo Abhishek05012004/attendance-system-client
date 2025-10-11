@@ -84,12 +84,63 @@ export default function Navbar() {
     }
   }, [showNotificationsDropdown])
 
-  // Polling for notifications
   useEffect(() => {
-    if (user && (user.role === "admin" || user.role === "manager" || user.role === "hr")) {
-      fetchNotifications()
-      const interval = setInterval(fetchNotifications, 30000)
-      return () => clearInterval(interval)
+    // Only for roles that receive notifications
+    if (!(user && (user.role === "admin" || user.role === "manager" || user.role === "hr"))) return
+
+    let es
+    let fallbackTimer
+
+    // Always fetch initial list
+    fetchNotifications()
+
+    try {
+      const token = sessionStorage.getItem("jwtToken")
+      if (!token) return
+
+      // Use absolute base URL since axios instance hides it
+      const baseURL = "https://attendance-system-server-blue.vercel.app/api"
+      const streamUrl = `${baseURL}/auth/notifications/stream?token=${encodeURIComponent(token)}`
+      console.log("[v0] Opening SSE notifications stream:", streamUrl)
+
+      es = new EventSource(streamUrl, { withCredentials: false })
+
+      es.addEventListener("hello", (e) => {
+        console.log("[v0] SSE hello:", e.data)
+      })
+
+      es.addEventListener("ping", () => {
+        // heartbeat, optional log
+      })
+
+      es.addEventListener("notification", (e) => {
+        try {
+          const payload = JSON.parse(e.data)
+          console.log("[v0] Realtime notification received:", payload)
+          setUnreadNotifications((prev) => [payload, ...prev])
+        } catch (err) {
+          console.error("[v0] Failed to parse SSE notification:", err)
+        }
+      })
+
+      es.onerror = (err) => {
+        console.error("[v0] SSE error, falling back to polling:", err)
+        // Fallback to faster polling if SSE errors out
+        if (!fallbackTimer) {
+          fallbackTimer = setInterval(fetchNotifications, 5000)
+        }
+      }
+    } catch (err) {
+      console.error("[v0] SSE setup error:", err)
+      fallbackTimer = setInterval(fetchNotifications, 5000)
+    }
+
+    return () => {
+      if (es) {
+        console.log("[v0] Closing SSE notifications stream")
+        es.close()
+      }
+      if (fallbackTimer) clearInterval(fallbackTimer)
     }
   }, [user])
 
