@@ -83,16 +83,23 @@ export default function Dashboard() {
 
       const clientNow = new Date()
       payload.clientTimestamp = clientNow.getTime()
+      payload.clientLocalDate = clientNow.toLocaleDateString("en-CA") // YYYY-MM-DD
+      payload.clientLocalTime = clientNow.toLocaleTimeString("en-GB", { hour12: false }) // HH:MM:SS 24h
+      payload.clientTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       if (location) {
         payload.location = location
       }
 
-      console.log("[v0] Check-in initiated at client local time:", clientNow.toLocaleString())
+      console.log("[v0] Check-in initiated at client local time:", clientNow.toLocaleString(), {
+        clientLocalDate: payload.clientLocalDate,
+        clientLocalTime: payload.clientLocalTime,
+        timeZone: payload.clientTimeZone,
+      })
 
       const response = await API.post("/attendance/checkin", payload)
 
       console.log(
-        "[v0] Check-in saved as:",
+        "[v0] Check-in saved (should match blue clock):",
         response.data?.attendance?.checkIn,
         "on date:",
         response.data?.attendance?.date,
@@ -120,16 +127,23 @@ export default function Dashboard() {
 
       const clientNow = new Date()
       payload.clientTimestamp = clientNow.getTime()
+      payload.clientLocalDate = clientNow.toLocaleDateString("en-CA") // YYYY-MM-DD
+      payload.clientLocalTime = clientNow.toLocaleTimeString("en-GB", { hour12: false }) // HH:MM:SS 24h
+      payload.clientTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       if (location) {
         payload.location = location
       }
 
-      console.log("[v0] Check-out initiated at client local time:", clientNow.toLocaleString())
+      console.log("[v0] Check-out initiated at client local time:", clientNow.toLocaleString(), {
+        clientLocalDate: payload.clientLocalDate,
+        clientLocalTime: payload.clientLocalTime,
+        timeZone: payload.clientTimeZone,
+      })
 
       const response = await API.post("/attendance/checkout", payload)
 
       console.log(
-        "[v0] Check-out saved as:",
+        "[v0] Check-out saved (should match blue clock):",
         response.data?.attendance?.checkOut,
         "on date:",
         response.data?.attendance?.date,
