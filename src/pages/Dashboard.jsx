@@ -1,13 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useAuth } from "../context/AuthContext"
 import { toast } from "react-toastify"
 import { Clock, Calendar, TrendingUp, CheckCircle, XCircle, Timer, User, Building, Briefcase, Info } from "lucide-react"
 import API from "../services/api"
+import FaceModal from "../components/face-modal" // add FaceModal
 
 export default function Dashboard() {
-  const { user } = useAuth()
+  const { user, updateUser } = useAuth() // need updateUser to set faceEnrolled after enrollment
   const [attendanceStatus, setAttendanceStatus] = useState({
     hasCheckedIn: false,
     hasCheckedOut: false,
@@ -22,6 +23,9 @@ export default function Dashboard() {
   })
   const [loading, setLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [showFace, setShowFace] = useState(false) // modal visibility
+  const [faceMode, setFaceMode] = useState("verify") // "verify" | "enroll"
+  const faceEmbeddingRef = useRef(null) // requires useRef import
 
   useEffect(() => {
     fetchAttendanceStatus()
@@ -77,88 +81,72 @@ export default function Dashboard() {
 
   const handleCheckIn = async () => {
     setLoading(true)
+    if (!user?.faceEnrolled) {
+      setFaceMode("enroll")
+      setShowFace(true)
+      return
+    }
+    setFaceMode("verify")
+    setShowFace(true)
+  }
+
+  const handleCheckOut = async () => {
+    setLoading(true)
+    if (!user?.faceEnrolled) {
+      setFaceMode("enroll")
+      setShowFace(true)
+      return
+    }
+    setFaceMode("verify")
+    setShowFace(true)
+  }
+
+  const proceedCheckIn = async (embedding) => {
+    setLoading(true)
     try {
       const location = await getLocation()
-      const payload = {}
-
       const clientNow = new Date()
-      payload.clientTimestamp = clientNow.getTime()
-      payload.clientLocalDate = clientNow.toLocaleDateString("en-CA") // YYYY-MM-DD
-      payload.clientLocalTime = clientNow.toLocaleTimeString("en-GB", { hour12: false }) // HH:MM:SS 24h
-      payload.clientTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-      if (location) {
-        payload.location = location
+      const payload = {
+        clientTimestamp: clientNow.getTime(),
+        clientLocalDate: clientNow.toLocaleDateString("en-CA"),
+        clientLocalTime: clientNow.toLocaleTimeString("en-GB", { hour12: false }),
+        clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        faceEmbedding: embedding,
+        ...(location ? { location } : {}),
       }
-
-      console.log("[v0] Check-in initiated at client local time:", clientNow.toLocaleString(), {
-        clientLocalDate: payload.clientLocalDate,
-        clientLocalTime: payload.clientLocalTime,
-        timeZone: payload.clientTimeZone,
-      })
-
+      console.log("[v0] Proceeding check-in with face verification")
       const response = await API.post("/attendance/checkin", payload)
-
-      console.log(
-        "[v0] Check-in saved (should match blue clock):",
-        response.data?.attendance?.checkIn,
-        "on date:",
-        response.data?.attendance?.date,
-      )
-
       toast.success("Checked in successfully!")
-      fetchAttendanceStatus()
+      await fetchAttendanceStatus()
     } catch (err) {
       console.error("Check-in error:", err)
-      if (err.response?.status === 400) {
-        toast.warning(err.response.data.message)
-      } else {
-        toast.error("Error checking in. Please try again.")
-      }
+      toast.error(err.response?.data?.message || "Error checking in")
     } finally {
       setLoading(false)
     }
   }
 
-  const handleCheckOut = async () => {
+  const proceedCheckOut = async (embedding) => {
     setLoading(true)
     try {
       const location = await getLocation()
-      const payload = {}
-
       const clientNow = new Date()
-      payload.clientTimestamp = clientNow.getTime()
-      payload.clientLocalDate = clientNow.toLocaleDateString("en-CA") // YYYY-MM-DD
-      payload.clientLocalTime = clientNow.toLocaleTimeString("en-GB", { hour12: false }) // HH:MM:SS 24h
-      payload.clientTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
-      if (location) {
-        payload.location = location
+      const payload = {
+        clientTimestamp: clientNow.getTime(),
+        clientLocalDate: clientNow.toLocaleDateString("en-CA"),
+        clientLocalTime: clientNow.toLocaleTimeString("en-GB", { hour12: false }),
+        clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        faceEmbedding: embedding,
+        ...(location ? { location } : {}),
       }
-
-      console.log("[v0] Check-out initiated at client local time:", clientNow.toLocaleString(), {
-        clientLocalDate: payload.clientLocalDate,
-        clientLocalTime: payload.clientLocalTime,
-        timeZone: payload.clientTimeZone,
-      })
-
+      console.log("[v0] Proceeding check-out with face verification")
       const response = await API.post("/attendance/checkout", payload)
-
-      console.log(
-        "[v0] Check-out saved (should match blue clock):",
-        response.data?.attendance?.checkOut,
-        "on date:",
-        response.data?.attendance?.date,
-      )
-
       toast.success("Checked out successfully!")
-      fetchAttendanceStatus()
-      fetchStats()
+      await fetchAttendanceStatus()
+      await fetchStats()
     } catch (err) {
       console.error("Check-out error:", err)
-      if (err.response?.status === 400 || err.response?.status === 404) {
-        toast.warning(err.response.data.message)
-      } else {
-        toast.error("Error checking out. Please try again.")
-      }
+      toast.error(err.response?.data?.message || "Error checking out")
     } finally {
       setLoading(false)
     }
@@ -411,6 +399,30 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Face Modal */}
+      {showFace && (
+        <FaceModal
+          open={showFace}
+          mode={faceMode}
+          onClose={() => setShowFace(false)}
+          onEnrolled={(updatedUser) => {
+            console.log("[v0] Face enrolled for user:", updatedUser?._id)
+            updateUser({ ...user, faceEnrolled: true })
+            // Immediately verify to proceed with current action
+            setTimeout(() => setFaceMode("verify"), 0)
+          }}
+          onVerified={(embedding) => {
+            setShowFace(false)
+            // Determine which action was requested last by buttons' disabled state
+            if (!attendanceStatus.hasCheckedIn) {
+              proceedCheckIn(embedding)
+            } else if (!attendanceStatus.hasCheckedOut) {
+              proceedCheckOut(embedding)
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
