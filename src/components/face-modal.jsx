@@ -4,31 +4,50 @@ import { useEffect, useRef, useState } from "react"
 import API from "../services/api"
 
 // Prefer a reliable CDN first, then fall back. You can also host these files in /public/face-models and add "/face-models" as first entry.
-const MODEL_BASES = [
-  "/face-models",
+const CANDIDATES_STATIC = [
+  // Known CORS-friendly sources first
   "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights",
   "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/0.22.2/weights",
+  // npm CDNs are less reliable for weights, keep as last resort
   "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights",
-  "https://unpkg.com/face-api.js@0.22.2/weights",
 ]
 
-// Helper to resolve the first working model base by probing a known manifest file
+// Replace MODEL_BASES/resolveModelBase with robust JSON probe
 const KNOWN_MANIFEST = "tiny_face_detector_model-weights_manifest.json"
+
+async function probeBaseJSON(base) {
+  const url = `${base.replace(/\/$/, "")}/${KNOWN_MANIFEST}`
+  try {
+    const res = await fetch(url, { method: "GET", mode: "cors", cache: "no-store" })
+    if (!res.ok) {
+      console.warn("[v0] Probe non-OK:", res.status, url)
+      return null
+    }
+    const ct = (res.headers.get("content-type") || "").toLowerCase()
+    if (!ct.includes("application/json")) {
+      console.warn("[v0] Probe wrong content-type:", ct, url)
+      return null
+    }
+    await res.json() // ensure valid JSON
+    return base
+  } catch (e) {
+    console.warn("[v0] Probe failed:", url, e?.message || e)
+    return null
+  }
+}
+
 async function resolveModelBase() {
-  for (const base of MODEL_BASES) {
-    const url = `${base.replace(/\/$/, "")}/${KNOWN_MANIFEST}`
-    try {
-      const res = await fetch(url, { method: "HEAD", mode: "cors" })
-      if (res.ok) {
-        console.log("[v0] Face models available at:", base)
-        return base
-      }
-      console.warn("[v0] Probe failed (status):", res.status, url)
-    } catch (e) {
-      console.warn("[v0] Probe failed (error):", url, e?.message || e)
+  const dynamicSelfHost = `${window.location.origin}/face-models` // works only if you actually upload files there
+  const candidates = [...CANDIDATES_STATIC, dynamicSelfHost]
+
+  for (const base of candidates) {
+    const ok = await probeBaseJSON(base)
+    if (ok) {
+      console.log("[v0] Using face model base:", ok)
+      return ok
     }
   }
-  throw new Error("No reachable face model source")
+  throw new Error("No reachable face model source with valid JSON")
 }
 
 export default function FaceModal({ open, mode = "verify", onClose, onVerified, onEnrolled }) {
@@ -93,10 +112,19 @@ export default function FaceModal({ open, mode = "verify", onClose, onVerified, 
           if (videoRef.current) {
             videoRef.current.srcObject = stream
             videoRef.current.setAttribute("playsinline", "true")
+            try {
+              await videoRef.current.play()
+            } catch (playErr) {
+              console.warn("[v0] video.play() warning:", playErr?.message || playErr)
+            }
           }
         } catch (camErr) {
           console.error("[v0] Camera access error:", camErr)
-          setError("Unable to access camera. Please allow permissions and ensure no other app is using it.")
+          const msg =
+            camErr?.name === "NotAllowedError"
+              ? "Camera permission denied. Please allow access and try again."
+              : "Unable to access camera. Ensure no other app is using it and that you're on HTTPS."
+          setError(msg)
           return
         }
       } catch (e) {
@@ -124,7 +152,7 @@ export default function FaceModal({ open, mode = "verify", onClose, onVerified, 
     try {
       const faceapi = (await import("face-api.js")).default || (await import("face-api.js"))
       const video = videoRef.current
-      if (!video) {
+      if (!video || !video.srcObject) {
         setError("Camera not ready. Please allow camera access.")
         setLoading(false)
         return
@@ -172,7 +200,7 @@ export default function FaceModal({ open, mode = "verify", onClose, onVerified, 
       console.error("[v0] Face processing error:", e)
       // Differentiate likely model vs camera vs processing issues for better UX
       const msg =
-        typeof e?.message === "string" && /load|model|fetch/i.test(e.message)
+        typeof e?.message === "string" && /load|model|fetch|json/i.test(e.message)
           ? "Model download failed. Please reload and try again."
           : "Failed to process face. Please try again."
       setError(msg)
