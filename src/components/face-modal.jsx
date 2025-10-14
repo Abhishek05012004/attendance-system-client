@@ -5,9 +5,31 @@ import API from "../services/api"
 
 // Prefer a reliable CDN first, then fall back. You can also host these files in /public/face-models and add "/face-models" as first entry.
 const MODEL_BASES = [
-  "https://unpkg.com/face-api.js@0.22.2/weights",
+  "/face-models",
+  "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights",
+  "https://raw.githubusercontent.com/justadudewhohacks/face-api.js/0.22.2/weights",
   "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights",
+  "https://unpkg.com/face-api.js@0.22.2/weights",
 ]
+
+// Helper to resolve the first working model base by probing a known manifest file
+const KNOWN_MANIFEST = "tiny_face_detector_model-weights_manifest.json"
+async function resolveModelBase() {
+  for (const base of MODEL_BASES) {
+    const url = `${base.replace(/\/$/, "")}/${KNOWN_MANIFEST}`
+    try {
+      const res = await fetch(url, { method: "HEAD", mode: "cors" })
+      if (res.ok) {
+        console.log("[v0] Face models available at:", base)
+        return base
+      }
+      console.warn("[v0] Probe failed (status):", res.status, url)
+    } catch (e) {
+      console.warn("[v0] Probe failed (error):", url, e?.message || e)
+    }
+  }
+  throw new Error("No reachable face model source")
+}
 
 export default function FaceModal({ open, mode = "verify", onClose, onVerified, onEnrolled }) {
   const videoRef = useRef(null)
@@ -19,22 +41,19 @@ export default function FaceModal({ open, mode = "verify", onClose, onVerified, 
 
   // Helper: try multiple bases until one succeeds
   const loadModelsWithFallback = async (faceapi) => {
-    let lastErr
-    for (const base of MODEL_BASES) {
-      try {
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(base),
-          faceapi.nets.faceLandmark68Net.loadFromUri(base),
-          faceapi.nets.faceRecognitionNet.loadFromUri(base),
-        ])
-        console.log("[v0] Face models loaded from:", base)
-        return true
-      } catch (e) {
-        console.warn("[v0] Failed to load face models from:", base, e)
-        lastErr = e
-      }
+    const base = await resolveModelBase()
+    try {
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(base),
+        faceapi.nets.faceLandmark68Net.loadFromUri(base),
+        faceapi.nets.faceRecognitionNet.loadFromUri(base),
+      ])
+      console.log("[v0] Face models loaded from:", base)
+      return true
+    } catch (e) {
+      console.error("[v0] Model load error from chosen base:", base, e)
+      throw e
     }
-    throw lastErr || new Error("Unable to load face models")
   }
 
   useEffect(() => {
@@ -53,19 +72,31 @@ export default function FaceModal({ open, mode = "verify", onClose, onVerified, 
             setModelsReady(true)
           } catch (e) {
             console.error("[v0] Model load error:", e)
-            setError("Failed to load face recognition models. Please reload and try again.")
+            setError(
+              "Failed to load face recognition models. Please try again. Tip: host models under /face-models for best reliability.",
+            )
             return
           }
         }
 
         // Ask for camera only after models are ready
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+          if (!navigator.mediaDevices?.getUserMedia) {
+            setError("Camera API not available in this browser. Please use a modern browser over HTTPS.")
+            return
+          }
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+            audio: false,
+          })
           streamRef.current = stream
-          if (videoRef.current) videoRef.current.srcObject = stream
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream
+            videoRef.current.setAttribute("playsinline", "true")
+          }
         } catch (camErr) {
           console.error("[v0] Camera access error:", camErr)
-          setError("Unable to access camera. Please allow camera permissions and ensure no other app is using it.")
+          setError("Unable to access camera. Please allow permissions and ensure no other app is using it.")
           return
         }
       } catch (e) {
