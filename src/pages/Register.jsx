@@ -22,6 +22,7 @@ import {
   LogIn,
 } from "lucide-react"
 import API from "../services/api"
+import FaceModal from "../components/face-modal"
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -40,6 +41,8 @@ export default function Register() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [registrationSubmitted, setRegistrationSubmitted] = useState(false)
+  const [showFace, setShowFace] = useState(false)
+  const [faceEmbedding, setFaceEmbedding] = useState(null)
   const navigate = useNavigate()
 
   const departments = [
@@ -119,6 +122,7 @@ export default function Register() {
         address: form.address,
         role: form.role,
         adminCode: form.adminCode,
+        ...(Array.isArray(faceEmbedding) ? { faceEmbedding, faceModelVersion: "face-api-0.22.2" } : {}),
       })
 
       toast.success("Registration request submitted successfully!")
@@ -506,6 +510,38 @@ export default function Register() {
                 </p>
               </div>
             </div>
+
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-gray-50">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Face Enrollment (Recommended)</p>
+                <p className="text-xs text-gray-600">
+                  Capture your face now so check-in can work immediately after approval.
+                </p>
+                {Array.isArray(faceEmbedding) && (
+                  <p className="text-xs text-green-600 mt-1">Face captured and attached to registration.</p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowFace(true)}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              >
+                {Array.isArray(faceEmbedding) ? "Retake Face" : "Enroll Face"}
+              </button>
+            </div>
+
+            {/* Face modal for registration */}
+            {showFace && (
+              <FaceModal
+                open={showFace}
+                mode="enroll"
+                onClose={() => setShowFace(false)}
+                onEnrolled={() => {
+                  // Capture locally by verifying once via /face/verify? We just need the embedding; reuse FaceModal verify path not ideal.
+                }}
+                onVerified={null}
+              />
+            )}
 
             {/* Address */}
             <div>
