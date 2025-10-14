@@ -535,9 +535,12 @@ export default function Register() {
               <FaceModal
                 open={showFace}
                 mode="enroll"
+                enrollViaApi={false}
                 onClose={() => setShowFace(false)}
-                onEnrolled={() => {
-                  // Capture locally by verifying once via /face/verify? We just need the embedding; reuse FaceModal verify path not ideal.
+                onEnrolled={(embeddingOrUser) => {
+                  if (Array.isArray(embeddingOrUser)) {
+                    setFaceEmbedding(embeddingOrUser)
+                  }
                 }}
                 onVerified={null}
               />

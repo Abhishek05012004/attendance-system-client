@@ -50,7 +50,7 @@ async function resolveModelBase() {
   throw new Error("No reachable face model source with valid JSON")
 }
 
-export default function FaceModal({ open, mode = "verify", onClose, onVerified, onEnrolled }) {
+export default function FaceModal({ open, mode = "verify", enrollViaApi = true, onClose, onVerified, onEnrolled }) {
   const videoRef = useRef(null)
   const canvasRef = useRef(null)
   const streamRef = useRef(null)
@@ -177,13 +177,18 @@ export default function FaceModal({ open, mode = "verify", onClose, onVerified, 
       const embedding = Array.from(detection.descriptor)
 
       if (mode === "enroll") {
-        console.log("[v0] Enrolling face…")
-        const res = await API.post("/face/enroll", {
-          embedding,
-          modelVersion: "face-api-0.22.2",
-        })
-        console.log("[v0] Enroll success for user:", res?.data?.user?._id || "unknown")
-        onEnrolled?.(res.data.user)
+        if (enrollViaApi) {
+          console.log("[v0] Enrolling face…")
+          const res = await API.post("/face/enroll", {
+            embedding,
+            modelVersion: "face-api-0.22.2",
+          })
+          console.log("[v0] Enroll success for user:", res?.data?.user?._id || "unknown")
+          onEnrolled?.(res.data.user)
+        } else {
+          console.log("[v0] Captured enrollment face locally (capture-only).")
+          onEnrolled?.(embedding)
+        }
       } else {
         console.log("[v0] Verifying face…")
         const res = await API.post("/face/verify", { embedding })
@@ -198,7 +203,6 @@ export default function FaceModal({ open, mode = "verify", onClose, onVerified, 
       onClose?.()
     } catch (e) {
       console.error("[v0] Face processing error:", e)
-      // Differentiate likely model vs camera vs processing issues for better UX
       const msg =
         typeof e?.message === "string" && /load|model|fetch|json/i.test(e.message)
           ? "Model download failed. Please reload and try again."

@@ -406,15 +406,19 @@ export default function Dashboard() {
           open={showFace}
           mode={faceMode}
           onClose={() => setShowFace(false)}
-          onEnrolled={(updatedUser) => {
-            console.log("[v0] Face enrolled for user:", updatedUser?._id)
-            updateUser({ ...user, faceEnrolled: true })
+          onEnrolled={(payload) => {
+            if (Array.isArray(payload)) {
+              // capture-only is not expected here, but if used, do nothing special
+              console.log("[v0] Enrollment embedding captured (dashboard). Prompting verify next.")
+            } else {
+              console.log("[v0] Face enrolled for user:", payload?._id)
+              updateUser({ ...user, faceEnrolled: true })
+            }
             // Immediately verify to proceed with current action
             setTimeout(() => setFaceMode("verify"), 0)
           }}
           onVerified={(embedding) => {
             setShowFace(false)
-            // Determine which action was requested last by buttons' disabled state
             if (!attendanceStatus.hasCheckedIn) {
               proceedCheckIn(embedding)
             } else if (!attendanceStatus.hasCheckedOut) {
