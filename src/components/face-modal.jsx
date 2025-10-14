@@ -184,7 +184,7 @@ export default function FaceModal({ open, mode = "verify", enrollViaApi = true, 
             modelVersion: "face-api-0.22.2",
           })
           console.log("[v0] Enroll success for user:", res?.data?.user?._id || "unknown")
-          onEnrolled?.(res.data.user)
+          onEnrolled?.({ user: res.data.user, embedding })
         } else {
           console.log("[v0] Captured enrollment face locally (capture-only).")
           onEnrolled?.(embedding)

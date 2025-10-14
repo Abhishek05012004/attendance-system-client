@@ -406,16 +406,27 @@ export default function Dashboard() {
           open={showFace}
           mode={faceMode}
           onClose={() => setShowFace(false)}
-          onEnrolled={(payload) => {
-            if (Array.isArray(payload)) {
-              // capture-only is not expected here, but if used, do nothing special
-              console.log("[v0] Enrollment embedding captured (dashboard). Prompting verify next.")
-            } else {
-              console.log("[v0] Face enrolled for user:", payload?._id)
-              updateUser({ ...user, faceEnrolled: true })
+          onEnrolled={async (payload) => {
+            try {
+              if (payload && Array.isArray(payload)) {
+                // Not expected in dashboard (we enroll via API), but handle gracefully
+                await proceedCheckIn(payload)
+                updateUser({ ...user, faceEnrolled: true })
+              } else if (payload && payload.embedding) {
+                await proceedCheckIn(payload.embedding)
+                updateUser({ ...user, faceEnrolled: true })
+              } else {
+                // Fallback: show verify step (legacy)
+                setFaceMode("verify")
+                return
+              }
+              setShowFace(false)
+            } catch (e) {
+              // if check-in fails, keep modal closed and show error from proceedCheckIn
+              console.error("[v0] Inline enroll+checkin failed:", e)
+            } finally {
+              setLoading(false)
             }
-            // Immediately verify to proceed with current action
-            setTimeout(() => setFaceMode("verify"), 0)
           }}
           onVerified={(embedding) => {
             setShowFace(false)
