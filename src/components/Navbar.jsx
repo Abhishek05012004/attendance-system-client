@@ -2,12 +2,12 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
-import { User, LogOut, Bell } from "lucide-react" // Removed Search icon
+import { User, LogOut, Bell, Menu } from "lucide-react" // Added Menu icon
 import { clearAuthToken } from "../services/api"
 import API from "../services/api"
 import { useNavigate } from "react-router-dom"
 
-export default function Navbar() {
+export default function Navbar({ onOpenSidebar }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [showDropdown, setShowDropdown] = useState(false)
@@ -145,15 +145,22 @@ export default function Navbar() {
   }, [user])
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+    <nav className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-semibold text-gray-800">Employee Attendance System</h1>
+        <div className="flex items-center gap-3">
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            className="p-2 rounded-lg hover:bg-gray-100 md:hidden"
+            aria-label="Open sidebar"
+            onClick={onOpenSidebar}
+          >
+            <Menu className="w-5 h-5 text-gray-700" />
+          </button>
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-800">Employee Attendance System</h1>
         </div>
 
-        <div className="flex items-center space-x-4">
-          {/* Removed Search Box */}
-
+        <div className="flex items-center space-x-3 sm:space-x-4">
           {/* Notifications Icon (visible only for admin, manager, hr) */}
           {(user?.role === "admin" || user?.role === "manager" || user?.role === "hr") && (
             <div className="relative" ref={notificationsRef}>
@@ -163,13 +170,13 @@ export default function Navbar() {
               >
                 <Bell className="w-5 h-5 text-gray-600" />
                 {unreadNotifications.length > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/2">
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-[10px] font-bold leading-none text-red-100 bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/2">
                     {unreadNotifications.length}
                   </span>
                 )}
               </button>
               {showNotificationsDropdown && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
+                <div className="absolute right-0 mt-2 w-[90vw] sm:w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
                   <div className="px-4 py-2 text-sm font-semibold text-gray-800 border-b border-gray-200">
                     Notifications
                   </div>
