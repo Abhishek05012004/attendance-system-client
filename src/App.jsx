@@ -46,6 +46,8 @@ function App() {
             draggable
             pauseOnHover
             theme="light"
+            containerClassName="app-toast-container"
+            toastClassName="app-toast"
           />
 
           <Routes>

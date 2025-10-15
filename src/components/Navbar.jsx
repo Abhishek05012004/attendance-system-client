@@ -157,7 +157,7 @@ export default function Navbar({ onOpenSidebar }) {
           >
             <Menu className="w-5 h-5 text-gray-700" />
           </button>
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-800">Employee Attendance System</h1>
+          <h1 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">Employee Attendance System</h1>
         </div>
 
         <div className="flex items-center space-x-3 sm:space-x-4">
@@ -176,7 +176,7 @@ export default function Navbar({ onOpenSidebar }) {
                 )}
               </button>
               {showNotificationsDropdown && (
-                <div className="absolute right-0 mt-2 w-[90vw] sm:w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
+                <div className="absolute right-2 sm:right-0 mt-2 w-[92vw] sm:w-80 mx-2 sm:mx-0 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 max-h-80 overflow-y-auto">
                   <div className="px-4 py-2 text-sm font-semibold text-gray-800 border-b border-gray-200">
                     Notifications
                   </div>
