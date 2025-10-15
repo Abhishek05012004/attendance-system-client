@@ -37,7 +37,7 @@ export default function Layout() {
               >
                 <X className="w-5 h-5 text-gray-700" />
               </button>
-              <Sidebar onNavigate={() => setMobileSidebarOpen(false)} />
+              <Sidebar onNavigate={() => setMobileSidebarOpen(false)} mobile />
             </div>
           </div>
         </>

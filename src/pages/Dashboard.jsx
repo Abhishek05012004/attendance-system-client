@@ -314,28 +314,30 @@ export default function Dashboard() {
 
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="text-sm font-medium text-gray-600 mb-3">Employee Information</div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">ID:</span>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">{user?.employeeId || "N/A"}</span>
+              <div className="grid grid-cols-2 gap-y-2">
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">ID:</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Building className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Department:</span>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">{user?.department || "N/A"}</span>
+                <span className="text-sm font-medium text-gray-900 text-right break-words">
+                  {user?.employeeId || "N/A"}
+                </span>
+
+                <div className="flex items-center space-x-2">
+                  <Building className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">Department:</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Briefcase className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">Position:</span>
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">{user?.position || "N/A"}</span>
+                <span className="text-sm font-medium text-gray-900 text-right break-words">
+                  {user?.department || "N/A"}
+                </span>
+
+                <div className="flex items-center space-x-2">
+                  <Briefcase className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-600">Position:</span>
                 </div>
+                <span className="text-sm font-medium text-gray-900 text-right break-words">
+                  {user?.position || "N/A"}
+                </span>
               </div>
             </div>
           </div>
@@ -345,64 +347,64 @@ export default function Dashboard() {
       {/* CLARIFIED Statistics - Monthly Stats */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Monthly Statistics</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900">Monthly Statistics</h3>
           <div className="flex items-center space-x-2 text-blue-600">
             <Info className="w-4 h-4" />
-            <span className="text-sm">
+            <span className="text-xs sm:text-sm">
               Current Month: {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-blue-50 rounded-xl p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+          <div className="bg-blue-50 rounded-xl p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="w-6 h-6 text-blue-600" />
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Days Worked This Month</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalDays}</p>
-                <p className="text-xs text-gray-500">Total attendance records</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Days Worked This Month</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.totalDays}</p>
+                <p className="text-[11px] sm:text-xs text-gray-500">Total attendance records</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-green-50 rounded-xl p-6">
+          <div className="bg-green-50 rounded-xl p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Present Days This Month</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.presentDays}</p>
-                <p className="text-xs text-gray-500">Days with check-in</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Present Days This Month</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.presentDays}</p>
+                <p className="text-[11px] sm:text-xs text-gray-500">Days with check-in</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-purple-50 rounded-xl p-6">
+          <div className="bg-purple-50 rounded-xl p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
-                <Clock className="w-6 h-6 text-purple-600" />
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Hours This Month</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalHours}h</p>
-                <p className="text-xs text-gray-500">Working hours logged</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Total Hours This Month</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.totalHours}h</p>
+                <p className="text-[11px] sm:text-xs text-gray-500">Working hours logged</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-orange-50 rounded-xl p-6">
+          <div className="bg-orange-50 rounded-xl p-4 sm:p-6">
             <div className="flex items-center">
               <div className="p-2 bg-orange-100 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-orange-600" />
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Avg Hours/Day</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.averageHours}h</p>
-                <p className="text-xs text-gray-500">This month average</p>
+              <div className="ml-3 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Avg Hours/Day</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.averageHours}h</p>
+                <p className="text-[11px] sm:text-xs text-gray-500">This month average</p>
               </div>
             </div>
           </div>

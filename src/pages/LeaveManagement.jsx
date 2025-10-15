@@ -287,27 +287,25 @@ export default function LeaveManagement() {
       {canManageLeaves && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 flex items-center">
                 <UserX className="w-5 h-5 inline mr-2" />
                 Employees on Leave
               </h3>
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm font-medium text-gray-700">Select Date:</label>
-                  <DatePicker
-                    selected={selectedDate}
-                    onChange={handleDateChange}
-                    dateFormat="yyyy-MM-dd"
-                    className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white text-sm"
-                  />
-                  <button
-                    onClick={resetToToday}
-                    className="px-3 py-1 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Today
-                  </button>
-                </div>
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                <label className="text-sm font-medium text-gray-700">Select Date:</label>
+                <DatePicker
+                  selected={selectedDate}
+                  onChange={handleDateChange}
+                  dateFormat="yyyy-MM-dd"
+                  className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white text-sm"
+                />
+                <button
+                  onClick={resetToToday}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Today
+                </button>
               </div>
             </div>
             {selectedDate && (

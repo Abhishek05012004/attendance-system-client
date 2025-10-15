@@ -367,7 +367,7 @@ export default function UserManagement() {
             </div>
             <div className="space-y-4">
               <div className="flex items-center space-x-4 mb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mr-4">
                   <span className="text-blue-600 text-xl font-bold">{selectedUser.name?.charAt(0).toUpperCase()}</span>
                 </div>
                 <div>
@@ -430,7 +430,7 @@ export default function UserManagement() {
                   type="text"
                   required
                   style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                   value={editUser.name}
                   onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
                 />
@@ -441,7 +441,7 @@ export default function UserManagement() {
                   type="email"
                   required
                   style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                   value={editUser.email}
                   onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
                 />
@@ -451,7 +451,7 @@ export default function UserManagement() {
                 <select
                   required
                   style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                   value={editUser.department}
                   onChange={(e) => setEditUser({ ...editUser, department: e.target.value })}
                 >
@@ -468,7 +468,7 @@ export default function UserManagement() {
                 <select
                   required
                   style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                   value={editUser.position}
                   onChange={(e) => setEditUser({ ...editUser, position: e.target.value })}
                 >
@@ -485,7 +485,7 @@ export default function UserManagement() {
                 <input
                   type="tel"
                   style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                   value={editUser.phone}
                   onChange={(e) => setEditUser({ ...editUser, phone: e.target.value })}
                 />
@@ -495,7 +495,7 @@ export default function UserManagement() {
                 <textarea
                   rows={3}
                   style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                   value={editUser.address}
                   onChange={(e) => setEditUser({ ...editUser, address: e.target.value })}
                 />
@@ -503,7 +503,7 @@ export default function UserManagement() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   value={editUser.role}
                   onChange={(e) => setEditUser({ ...editUser, role: e.target.value })}
                 >
@@ -539,12 +539,12 @@ export default function UserManagement() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search by name, email, or ID..."
                 style={{ color: "#111827", backgroundColor: "#ffffff" }}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                className="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                 value={filters.search}
                 onChange={(e) => handleFilterChange("search", e.target.value)}
               />

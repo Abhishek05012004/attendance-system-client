@@ -204,9 +204,9 @@ export default function RegistrationRequests() {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2">
           <span className="text-sm font-medium text-gray-700">Filter by status:</span>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             {[
               { value: "all", label: "All Requests" },
               { value: "pending", label: "Pending" },
