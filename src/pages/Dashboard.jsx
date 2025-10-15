@@ -56,13 +56,12 @@ export default function Dashboard() {
   }
 
   const getLocation = () => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!navigator.geolocation) {
         console.warn("Geolocation is not supported")
-        resolve(null) // Return null instead of rejecting
+        resolve(null)
         return
       }
-
       navigator.geolocation.getCurrentPosition(
         (position) => {
           resolve({
@@ -72,7 +71,7 @@ export default function Dashboard() {
         },
         (error) => {
           console.warn("Geolocation error:", error)
-          resolve(null) // Return null instead of rejecting
+          resolve(null)
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
       )
@@ -105,6 +104,11 @@ export default function Dashboard() {
     setLoading(true)
     try {
       const location = await getLocation()
+      if (!location) {
+        toast.error("Location permission is required to check in at the office.")
+        setLoading(false)
+        return
+      }
       const clientNow = new Date()
       const payload = {
         clientTimestamp: clientNow.getTime(),
@@ -112,7 +116,7 @@ export default function Dashboard() {
         clientLocalTime: clientNow.toLocaleTimeString("en-GB", { hour12: false }),
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         faceEmbedding: embedding,
-        ...(location ? { location } : {}),
+        location, // ensure lat/lng is sent
       }
       console.log("[v0] Proceeding check-in with face verification")
       const response = await API.post("/attendance/checkin", payload)
@@ -130,6 +134,11 @@ export default function Dashboard() {
     setLoading(true)
     try {
       const location = await getLocation()
+      if (!location) {
+        toast.error("Location permission is required to check out at the office.")
+        setLoading(false)
+        return
+      }
       const clientNow = new Date()
       const payload = {
         clientTimestamp: clientNow.getTime(),
@@ -137,7 +146,7 @@ export default function Dashboard() {
         clientLocalTime: clientNow.toLocaleTimeString("en-GB", { hour12: false }),
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         faceEmbedding: embedding,
-        ...(location ? { location } : {}),
+        location, // ensure lat/lng is sent
       }
       console.log("[v0] Proceeding check-out with face verification")
       const response = await API.post("/attendance/checkout", payload)

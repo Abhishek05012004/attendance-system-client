@@ -90,6 +90,12 @@ export default function Register() {
     e.preventDefault()
     setLoading(true)
 
+    if (!Array.isArray(faceEmbedding) || faceEmbedding.length < 64) {
+      toast.error("Face enrollment is required. Please enroll your face before submitting.")
+      setLoading(false)
+      return
+    }
+
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords do not match")
       setLoading(false)
@@ -513,9 +519,9 @@ export default function Register() {
 
             <div className="flex items-center justify-between p-4 rounded-lg border bg-gray-50">
               <div>
-                <p className="text-sm font-medium text-gray-900">Face Enrollment (Recommended)</p>
+                <p className="text-sm font-medium text-gray-900">Face Enrollment (Required)</p>
                 <p className="text-xs text-gray-600">
-                  Capture your face now so check-in can work immediately after approval.
+                  Capture your face now. Registration cannot be submitted without a valid face enrollment.
                 </p>
                 {Array.isArray(faceEmbedding) && (
                   <p className="text-xs text-green-600 mt-1">Face captured and attached to registration.</p>
