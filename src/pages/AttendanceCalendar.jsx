@@ -94,7 +94,8 @@ export default function AttendanceCalendar() {
     }
 
     if (!record || !record.isPresent) {
-      return "Absent"
+      // Return "Absent" only for desktop screens
+      return typeof window !== 'undefined' && window.innerWidth >= 640 ? "Absent" : ""
     }
 
     return `${record.workingHours}h`
