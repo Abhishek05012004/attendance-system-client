@@ -78,15 +78,15 @@ export default function AttendanceCalendar() {
     const record = calendarData[dateStr]
 
     if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return "Holiday"
+      return ""
     }
 
     if (!record) {
-      return "Absent"
+      return ""
     }
 
     if (!record.isPresent) {
-      return "Absent"
+      return ""
     }
 
     return `${record.workingHours}h`
@@ -222,7 +222,6 @@ export default function AttendanceCalendar() {
                   {date && (
                     <>
                       <div className="font-semibold">{date.getDate()}</div>
-                      <div className="text-xs mt-0.5 md:mt-1 line-clamp-1">{getStatusLabel(date)}</div>
                     </>
                   )}
                 </div>
