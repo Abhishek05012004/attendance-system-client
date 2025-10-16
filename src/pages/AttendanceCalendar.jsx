@@ -50,10 +50,15 @@ export default function AttendanceCalendar() {
 
   const getStatusColor = (date) => {
     const dateStr = getLocalDateString(date)
+    const dayOfWeek = date.getDay()
     const record = calendarData[dateStr]
 
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return "bg-white text-gray-600 border-2 border-gray-200"
+    }
+
     if (!record) {
-      return "bg-gray-100 text-gray-600"
+      return "bg-red-600 text-white border-2 border-red-700"
     }
 
     if (!record.isPresent) {
@@ -69,10 +74,15 @@ export default function AttendanceCalendar() {
 
   const getStatusLabel = (date) => {
     const dateStr = getLocalDateString(date)
+    const dayOfWeek = date.getDay()
     const record = calendarData[dateStr]
 
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return "Holiday"
+    }
+
     if (!record) {
-      return "No Data"
+      return "Absent"
     }
 
     if (!record.isPresent) {
@@ -109,69 +119,73 @@ export default function AttendanceCalendar() {
   const selectedDateRecord = selectedDate ? calendarData[getLocalDateString(selectedDate)] : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 px-2 md:px-0">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg md:rounded-xl p-4 md:p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Attendance Calendar</h1>
-            <p className="text-blue-100 mt-1">View your working hours for each day</p>
+            <h1 className="text-xl md:text-2xl font-bold">Attendance Calendar</h1>
+            <p className="text-blue-100 mt-1 text-sm md:text-base">View your working hours for each day</p>
           </div>
-          <Clock className="w-12 h-12 opacity-50" />
+          <Clock className="w-8 h-8 md:w-12 md:h-12 opacity-50 flex-shrink-0" />
         </div>
       </div>
 
       {/* Calendar Container */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-200 p-3 md:p-6">
         {/* Month Navigation */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4 md:mb-6">
           <button
             onClick={handlePrevMonth}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Previous month"
           >
-            <ChevronLeft className="w-6 h-6 text-gray-600" />
+            <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
           </button>
 
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">{monthName}</h2>
-            <p className="text-sm text-gray-500 mt-1">
+            <h2 className="text-lg md:text-2xl font-bold text-gray-900">{monthName}</h2>
+            <p className="text-xs md:text-sm text-gray-500 mt-1">
               {user?.name} • {user?.employeeId}
             </p>
           </div>
 
           <button
             onClick={handleNextMonth}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1 md:p-2 hover:bg-gray-100 rounded-lg transition-colors"
             title="Next month"
           >
-            <ChevronRight className="w-6 h-6 text-gray-600" />
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-600" />
           </button>
         </div>
 
         {/* Today Button */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-4 md:mb-6">
           <button
             onClick={handleToday}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            className="px-3 md:px-4 py-1 md:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm md:text-base"
           >
             Today
           </button>
         </div>
 
         {/* Legend */}
-        <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6 p-3 md:p-4 bg-gray-50 rounded-lg">
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-green-100 border-2 border-green-300 rounded"></div>
-            <span className="text-sm text-gray-700">≥ 6 hours (Present)</span>
+            <div className="w-4 h-4 md:w-6 md:h-6 bg-green-100 border-2 border-green-300 rounded"></div>
+            <span className="text-xs md:text-sm text-gray-700">≥ 6h</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-pink-200 border-2 border-pink-300 rounded"></div>
-            <span className="text-sm text-gray-700">{"< 6 hours (Partial)"}</span>
+            <div className="w-4 h-4 md:w-6 md:h-6 bg-pink-200 border-2 border-pink-300 rounded"></div>
+            <span className="text-xs md:text-sm text-gray-700">{"< 6h"}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-red-600 border-2 border-red-700 rounded"></div>
-            <span className="text-sm text-gray-700">Absent</span>
+            <div className="w-4 h-4 md:w-6 md:h-6 bg-red-600 border-2 border-red-700 rounded"></div>
+            <span className="text-xs md:text-sm text-gray-700">Absent</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 md:w-6 md:h-6 bg-white border-2 border-gray-200 rounded"></div>
+            <span className="text-xs md:text-sm text-gray-700">Holiday</span>
           </div>
         </div>
 
@@ -183,21 +197,21 @@ export default function AttendanceCalendar() {
         ) : (
           <>
             {/* Day Headers */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
+            <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                <div key={day} className="text-center font-semibold text-gray-600 py-2">
+                <div key={day} className="text-center font-semibold text-gray-600 py-1 md:py-2 text-xs md:text-sm">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-2">
+            <div className="grid grid-cols-7 gap-1 md:gap-2">
               {days.map((date, index) => (
                 <div
                   key={index}
                   onClick={() => date && setSelectedDate(date)}
-                  className={`aspect-square flex flex-col items-center justify-center rounded-lg cursor-pointer transition-all ${
+                  className={`aspect-square flex flex-col items-center justify-center rounded-lg cursor-pointer transition-all text-xs md:text-sm ${
                     date ? getStatusColor(date) : "bg-gray-50"
                   } ${
                     selectedDate && date && selectedDate.toDateString() === date.toDateString()
@@ -207,8 +221,8 @@ export default function AttendanceCalendar() {
                 >
                   {date && (
                     <>
-                      <div className="text-sm font-semibold">{date.getDate()}</div>
-                      <div className="text-xs mt-1">{getStatusLabel(date)}</div>
+                      <div className="font-semibold">{date.getDate()}</div>
+                      <div className="text-xs mt-0.5 md:mt-1 line-clamp-1">{getStatusLabel(date)}</div>
                     </>
                   )}
                 </div>
@@ -219,8 +233,8 @@ export default function AttendanceCalendar() {
 
         {/* Selected Date Details */}
         {selectedDate && (
-          <div className="mt-8 p-6 bg-blue-50 rounded-lg border-2 border-blue-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="mt-4 md:mt-8 p-4 md:p-6 bg-blue-50 rounded-lg border-2 border-blue-200">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">
               {selectedDate.toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -230,16 +244,16 @@ export default function AttendanceCalendar() {
             </h3>
 
             {selectedDateRecord ? (
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
+              <div className="space-y-2 md:space-y-3">
+                <div className="flex justify-between items-center text-sm md:text-base">
                   <span className="text-gray-600">Check In:</span>
                   <span className="font-semibold text-gray-900">{selectedDateRecord.checkIn || "N/A"}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm md:text-base">
                   <span className="text-gray-600">Check Out:</span>
                   <span className="font-semibold text-gray-900">{selectedDateRecord.checkOut || "N/A"}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm md:text-base">
                   <span className="text-gray-600">Working Hours:</span>
                   <span
                     className={`font-semibold ${selectedDateRecord.workingHours >= 6 ? "text-green-600" : "text-pink-600"}`}
@@ -247,14 +261,14 @@ export default function AttendanceCalendar() {
                     {selectedDateRecord.workingHours} hours
                   </span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center text-sm md:text-base">
                   <span className="text-gray-600">Status:</span>
                   <span className="font-semibold text-gray-900 capitalize">{selectedDateRecord.status}</span>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2 text-red-600">
-                <AlertCircle className="w-5 h-5" />
+              <div className="flex items-center space-x-2 text-red-600 text-sm md:text-base">
+                <AlertCircle className="w-4 h-4 md:w-5 md:h-5" />
                 <span>No attendance record for this date</span>
               </div>
             )}
@@ -263,30 +277,30 @@ export default function AttendanceCalendar() {
       </div>
 
       {/* Summary Stats */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Month Summary</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-green-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600 mb-1">Full Days (≥6h)</p>
-            <p className="text-2xl font-bold text-green-600">
+      <div className="bg-white rounded-lg md:rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
+        <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 md:mb-4">Month Summary</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+          <div className="bg-green-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-gray-600 mb-1">Full Days (≥6h)</p>
+            <p className="text-xl md:text-2xl font-bold text-green-600">
               {Object.values(calendarData).filter((r) => r.isPresent && r.workingHours >= 6).length}
             </p>
           </div>
-          <div className="bg-pink-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600 mb-1">Partial Days ({"<6h"})</p>
-            <p className="text-2xl font-bold text-pink-600">
+          <div className="bg-pink-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-gray-600 mb-1">Partial Days ({"<6h"})</p>
+            <p className="text-xl md:text-2xl font-bold text-pink-600">
               {Object.values(calendarData).filter((r) => r.isPresent && r.workingHours < 6).length}
             </p>
           </div>
-          <div className="bg-red-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600 mb-1">Absent Days</p>
-            <p className="text-2xl font-bold text-red-600">
+          <div className="bg-red-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-gray-600 mb-1">Absent Days</p>
+            <p className="text-xl md:text-2xl font-bold text-red-600">
               {Object.values(calendarData).filter((r) => !r.isPresent).length}
             </p>
           </div>
-          <div className="bg-blue-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600 mb-1">Total Hours</p>
-            <p className="text-2xl font-bold text-blue-600">
+          <div className="bg-blue-50 rounded-lg p-3 md:p-4">
+            <p className="text-xs md:text-sm text-gray-600 mb-1">Total Hours</p>
+            <p className="text-xl md:text-2xl font-bold text-blue-600">
               {Object.values(calendarData)
                 .reduce((sum, r) => sum + (r.workingHours || 0), 0)
                 .toFixed(1)}
