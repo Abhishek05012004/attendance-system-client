@@ -10,6 +10,7 @@ export default function Sidebar({ onNavigate, mobile = false }) {
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["admin", "employee", "manager", "hr"] },
     { name: "Attendance", href: "/attendance", icon: Clock, roles: ["admin", "employee", "manager", "hr"] },
+    { name: "Calendar", href: "/calendar", icon: Calendar, roles: ["admin", "employee", "manager", "hr"] },
     { name: "Leave Management", href: "/leaves", icon: Calendar, roles: ["admin", "employee", "manager", "hr"] },
     { name: "Reports", href: "/reports", icon: FileText, roles: ["admin", "manager", "hr"] },
     { name: "Admin Dashboard", href: "/admin", icon: BarChart3, roles: ["admin"] },

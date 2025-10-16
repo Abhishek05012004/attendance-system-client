@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/AdminDashboard"
 import Profile from "./pages/Profile"
 import AttendanceLogs from "./pages/AttendanceLogs"
 import AttendanceReports from "./pages/AttendanceReports"
+import AttendanceCalendar from "./pages/AttendanceCalendar"
 import UserManagement from "./pages/UserManagement"
 import LeaveManagement from "./pages/LeaveManagement"
 import RegistrationRequests from "./pages/RegistrationRequests"
@@ -66,6 +67,7 @@ function App() {
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
+              <Route path="calendar" element={<AttendanceCalendar />} />
               <Route
                 path="admin"
                 element={
