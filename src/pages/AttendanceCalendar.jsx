@@ -41,8 +41,15 @@ export default function AttendanceCalendar() {
     return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
   }
 
+  const getLocalDateString = (date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
+
   const getStatusColor = (date) => {
-    const dateStr = date.toISOString().split("T")[0]
+    const dateStr = getLocalDateString(date)
     const record = calendarData[dateStr]
 
     if (!record) {
@@ -50,18 +57,18 @@ export default function AttendanceCalendar() {
     }
 
     if (!record.isPresent) {
-      return "bg-red-100 text-red-700 border-2 border-red-300"
+      return "bg-red-600 text-white border-2 border-red-700"
     }
 
     if (record.workingHours >= 6) {
       return "bg-green-100 text-green-700 border-2 border-green-300"
     }
 
-    return "bg-pink-100 text-pink-700 border-2 border-pink-300"
+    return "bg-pink-200 text-pink-800 border-2 border-pink-300"
   }
 
   const getStatusLabel = (date) => {
-    const dateStr = date.toISOString().split("T")[0]
+    const dateStr = getLocalDateString(date)
     const record = calendarData[dateStr]
 
     if (!record) {
@@ -99,7 +106,7 @@ export default function AttendanceCalendar() {
     days.push(new Date(currentYear, currentMonth - 1, i))
   }
 
-  const selectedDateRecord = selectedDate ? calendarData[selectedDate.toISOString().split("T")[0]] : null
+  const selectedDateRecord = selectedDate ? calendarData[getLocalDateString(selectedDate)] : null
 
   return (
     <div className="space-y-6">
@@ -159,11 +166,11 @@ export default function AttendanceCalendar() {
             <span className="text-sm text-gray-700">≥ 6 hours (Present)</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-pink-100 border-2 border-pink-300 rounded"></div>
+            <div className="w-6 h-6 bg-pink-200 border-2 border-pink-300 rounded"></div>
             <span className="text-sm text-gray-700">{"< 6 hours (Partial)"}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-red-100 border-2 border-red-300 rounded"></div>
+            <div className="w-6 h-6 bg-red-600 border-2 border-red-700 rounded"></div>
             <span className="text-sm text-gray-700">Absent</span>
           </div>
         </div>

@@ -36,10 +36,12 @@ export default function Profile() {
     setLoading(true)
 
     try {
-      const res = await API.put(`/users/${user.id}`, profile)
+      const userId = user._id || user.id
+      const res = await API.put(`/users/${userId}`, profile)
       updateUser(res.data.user)
       toast.success("Profile updated successfully!")
     } catch (err) {
+      console.error("Profile update error:", err)
       toast.error(err.response?.data?.error || "Failed to update profile")
     } finally {
       setLoading(false)
