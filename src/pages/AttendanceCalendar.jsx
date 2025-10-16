@@ -222,6 +222,9 @@ export default function AttendanceCalendar() {
                   {date && (
                     <>
                       <div className="font-semibold">{date.getDate()}</div>
+                      {getStatusLabel(date) && (
+                        <div className="text-[10px] md:text-xs font-medium">{getStatusLabel(date)}</div>
+                      )}
                     </>
                   )}
                 </div>
