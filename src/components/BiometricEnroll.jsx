@@ -71,11 +71,7 @@ export default function BiometricEnroll({ onSuccess }) {
         response: {
           clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
           attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject))),
-          publicKey: credential.response.getPublicKey()
-            ? btoa(String.fromCharCode(...new Uint8Array(credential.response.getPublicKey())))
-            : null,
-          signCount: credential.response.transports ? 0 : credential.response.signCount,
-          transports: credential.response.transports || [],
+          transports: credential.response.transports || ["internal"],
         },
       }
 
