@@ -39,15 +39,25 @@ export default function BiometricEnroll({ onSuccess }) {
       setEnrollmentStep("scanning")
       toast.info("Please scan your fingerprint on your device...")
 
+      const rpID = options.rp.id
+
       // Step 2: Create credential with WebAuthn
       const credential = await navigator.credentials.create({
         publicKey: {
-          ...options,
           challenge: Uint8Array.from(atob(options.challenge), (c) => c.charCodeAt(0)),
-          user: {
-            ...options.user,
-            id: Uint8Array.from(atob(options.user.id), (c) => c.charCodeAt(0)),
+          rp: {
+            name: options.rp.name,
+            id: rpID, // Use server-provided RP ID
           },
+          user: {
+            id: Uint8Array.from(atob(options.user.id), (c) => c.charCodeAt(0)),
+            name: options.user.name,
+            displayName: options.user.displayName,
+          },
+          pubKeyCredParams: options.pubKeyCredParams,
+          timeout: options.timeout,
+          attestation: options.attestation,
+          authenticatorSelection: options.authenticatorSelection,
         },
       })
 
