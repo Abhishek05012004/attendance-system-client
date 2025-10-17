@@ -10,6 +10,7 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
   const [step, setStep] = useState("device-name") // device-name, scanning, success
   const [deviceName, setDeviceName] = useState("")
   const [challenge, setChallenge] = useState(null)
+  const [registrationOptions, setRegistrationOptions] = useState(null)
 
   const handleStartEnrollment = async () => {
     if (!deviceName.trim()) {
@@ -24,10 +25,13 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
 
       // Get registration options
       const res = await API.post("/fingerprint/register-options", { deviceName }, { headers })
+      console.log("[v0] Registration options received:", res.data)
+
       setChallenge(res.data.challenge)
+      setRegistrationOptions(res.data)
       setStep("scanning")
     } catch (error) {
-      console.error("Enrollment error:", error)
+      console.error("[v0] Enrollment error:", error)
       toast.error(error.response?.data?.error || "Failed to start enrollment")
       setStep("device-name")
     } finally {
@@ -46,27 +50,29 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
       }
 
       const creationOptions = {
-        challenge: Uint8Array.from(atob(challenge), (c) => c.charCodeAt(0)),
+        challenge: Uint8Array.from(atob(challenge.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
         rp: {
           name: "Employee Attendance System",
-          id: window.location.hostname,
+          id: window.location.hostname === "localhost" ? "localhost" : window.location.hostname,
         },
         user: {
-          id: Uint8Array.from("user-id", (c) => c.charCodeAt(0)),
-          name: "user@example.com",
-          displayName: "User",
+          id: Uint8Array.from(atob(registrationOptions.user.id.replace(/-/g, "+").replace(/_/g, "/")), (c) =>
+            c.charCodeAt(0),
+          ),
+          name: registrationOptions.user.name,
+          displayName: registrationOptions.user.displayName,
         },
-        pubKeyCredParams: [
-          { alg: -7, type: "public-key" }, // ES256
-          { alg: -257, type: "public-key" }, // RS256
-        ],
+        pubKeyCredParams: registrationOptions.pubKeyCredParams,
         timeout: 60000,
         attestation: "direct",
         authenticatorSelection: {
           authenticatorAttachment: "platform",
           userVerification: "preferred",
+          residentKey: "preferred",
         },
       }
+
+      console.log("[v0] Creating credential with options:", creationOptions)
 
       // Create credential
       const credential = await navigator.credentials.create({
@@ -79,19 +85,45 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         return
       }
 
-      // Extract data from credential
+      console.log("[v0] Credential created:", credential)
+
       const credentialId = btoa(String.fromCharCode.apply(null, new Uint8Array(credential.id)))
-      const publicKey = btoa(String.fromCharCode.apply(null, new Uint8Array(credential.response.getPublicKey())))
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=/g, "")
+
+      // Get public key in JWK format
+      const publicKeyJwk = credential.response.getPublicKey()
+        ? JSON.parse(
+            new TextDecoder().decode(
+              new Uint8Array(
+                await crypto.subtle.exportKey(
+                  "jwk",
+                  await crypto.subtle.importKey(
+                    "raw",
+                    credential.response.getPublicKey(),
+                    { name: "ECDSA", namedCurve: "P-256" },
+                    true,
+                    ["verify"],
+                  ),
+                ),
+              ),
+            ),
+          )
+        : null
+
       const transports = credential.response.getTransports ? credential.response.getTransports() : []
 
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+      console.log("[v0] Sending registration data to backend")
 
       // Send to backend
       const registerRes = await API.post(
         "/fingerprint/register",
         {
           credentialId,
-          publicKey,
+          publicKeyJwk: publicKeyJwk || {},
           counter: 0,
           transports,
           deviceName,
@@ -99,6 +131,8 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         },
         { headers },
       )
+
+      console.log("[v0] Registration response:", registerRes.data)
 
       setStep("success")
 
@@ -110,7 +144,7 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         })
       }, 2000)
     } catch (error) {
-      console.error("Fingerprint capture error:", error)
+      console.error("[v0] Fingerprint capture error:", error)
       toast.error(error.response?.data?.error || "Fingerprint enrollment failed")
       setStep("device-name")
     } finally {
