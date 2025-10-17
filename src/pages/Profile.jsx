@@ -163,7 +163,7 @@ export default function Profile() {
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
                   >
                     <div>
-                      <p className="font-medium text-gray-900">{cred.deviceName}</p>
+                      <p className="font-medium text-gray-900">Fingerprint</p>
                       <p className="text-xs text-gray-500">
                         Registered on {new Date(cred.createdAt).toLocaleDateString()}
                       </p>
