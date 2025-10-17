@@ -28,7 +28,7 @@ function base64UrlToArrayBuffer(base64url) {
 
 export default function FingerprintRegister({ onClose, onSuccess, isModal = false, token = null }) {
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState("device-name") // device-name, scanning, success
+  const [step, setStep] = useState("device-name")
   const [deviceName, setDeviceName] = useState("")
   const [challenge, setChallenge] = useState(null)
   const [registrationOptions, setRegistrationOptions] = useState(null)
@@ -46,13 +46,12 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
 
       // Get registration options
       const res = await API.post("/fingerprint/register-options", { deviceName }, { headers })
-      console.log("[v0] Registration options received:", res.data)
 
       setChallenge(res.data.challenge)
       setRegistrationOptions(res.data)
       setStep("scanning")
     } catch (error) {
-      console.error("[v0] Enrollment error:", error)
+      console.error("Enrollment error:", error)
       toast.error(error.response?.data?.error || "Failed to start enrollment")
       setStep("device-name")
     } finally {
@@ -94,9 +93,6 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         },
       }
 
-      console.log("[v0] Creating credential with options:", creationOptions)
-
-      // Create credential
       const credential = await navigator.credentials.create({
         publicKey: creationOptions,
       })
@@ -107,40 +103,12 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         return
       }
 
-      console.log("[v0] Credential created:", credential)
-
       const credentialId = arrayBufferToBase64Url(credential.id)
       const attestationObject = arrayBufferToBase64Url(credential.response.attestationObject)
       const clientDataJSON = arrayBufferToBase64Url(credential.response.clientDataJSON)
-
-      // Extract public key
-      let publicKeyJwk = null
-      try {
-        const publicKeyBuffer = credential.response.getPublicKey()
-        if (publicKeyBuffer) {
-          const publicKeyAlgorithm = credential.response.getPublicKeyAlgorithm()
-          console.log("[v0] Public key algorithm:", publicKeyAlgorithm)
-
-          // For ECDSA (alg -7), use P-256 curve
-          const keyAlgorithm =
-            publicKeyAlgorithm === -7
-              ? { name: "ECDSA", namedCurve: "P-256" }
-              : { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]) }
-
-          const importedKey = await crypto.subtle.importKey("raw", publicKeyBuffer, keyAlgorithm, true, ["verify"])
-          const jwk = await crypto.subtle.exportKey("jwk", importedKey)
-          publicKeyJwk = jwk
-          console.log("[v0] Public key JWK:", publicKeyJwk)
-        }
-      } catch (keyError) {
-        console.warn("[v0] Could not extract public key:", keyError)
-      }
-
       const transports = credential.response.getTransports ? credential.response.getTransports() : []
 
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-
-      console.log("[v0] Sending registration data to backend")
 
       const registerRes = await API.post(
         "/fingerprint/register",
@@ -148,16 +116,12 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
           credentialId,
           attestationObject,
           clientDataJSON,
-          publicKeyJwk: publicKeyJwk || {},
-          counter: 0,
           transports,
           deviceName,
           challenge,
         },
         { headers },
       )
-
-      console.log("[v0] Registration response:", registerRes.data)
 
       setStep("success")
 
@@ -169,7 +133,7 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         })
       }, 2000)
     } catch (error) {
-      console.error("[v0] Fingerprint capture error:", error)
+      console.error("Fingerprint capture error:", error)
       toast.error(error.response?.data?.error || "Fingerprint enrollment failed")
       setStep("device-name")
     } finally {
