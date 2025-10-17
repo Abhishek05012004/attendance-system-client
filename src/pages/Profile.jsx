@@ -6,9 +6,11 @@ import { toast } from "react-toastify"
 import { User, Mail, Phone, MapPin, Building, Briefcase, Calendar, Save, Fingerprint, Trash2, Plus } from "lucide-react"
 import API from "../services/api"
 import FingerprintRegister from "../components/fingerprint-register"
+import { getAuthToken } from "../services/api"
 
 export default function Profile() {
   const { user, updateUser } = useAuth()
+  const authToken = getAuthToken()
   const [profile, setProfile] = useState({
     name: "",
     email: "",
@@ -137,6 +139,8 @@ export default function Profile() {
               <FingerprintRegister
                 onClose={() => setShowFingerprintModal(false)}
                 onSuccess={handleFingerprintSuccess}
+                isModal={true}
+                token={authToken}
               />
             </div>
           </div>

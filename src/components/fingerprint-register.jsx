@@ -5,7 +5,7 @@ import { Fingerprint, ArrowLeft, Loader, Check, X } from "lucide-react"
 import API from "../services/api"
 import { toast } from "react-toastify"
 
-export default function FingerprintRegister({ onClose, onSuccess, isModal = false }) {
+export default function FingerprintRegister({ onClose, onSuccess, isModal = false, token = null }) {
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState("device-name") // device-name, scanning, success
   const [deviceName, setDeviceName] = useState("")
@@ -20,13 +20,16 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
     try {
       setLoading(true)
 
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
       // Get registration options
-      const res = await API.post("/fingerprint/register-options", { deviceName })
+      const res = await API.post("/fingerprint/register-options", { deviceName }, { headers })
       setChallenge(res.data.challenge)
       setStep("scanning")
     } catch (error) {
       console.error("Enrollment error:", error)
       toast.error(error.response?.data?.error || "Failed to start enrollment")
+      setStep("device-name")
     } finally {
       setLoading(false)
     }
@@ -42,7 +45,6 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         return
       }
 
-      // Prepare credential creation options
       const creationOptions = {
         challenge: Uint8Array.from(atob(challenge), (c) => c.charCodeAt(0)),
         rp: {
@@ -54,7 +56,10 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
           name: "user@example.com",
           displayName: "User",
         },
-        pubKeyCredParams: [{ alg: -7, type: "public-key" }],
+        pubKeyCredParams: [
+          { alg: -7, type: "public-key" }, // ES256
+          { alg: -257, type: "public-key" }, // RS256
+        ],
         timeout: 60000,
         attestation: "direct",
         authenticatorSelection: {
@@ -79,15 +84,21 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
       const publicKey = btoa(String.fromCharCode.apply(null, new Uint8Array(credential.response.getPublicKey())))
       const transports = credential.response.getTransports ? credential.response.getTransports() : []
 
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
       // Send to backend
-      const registerRes = await API.post("/fingerprint/register", {
-        credentialId,
-        publicKey,
-        counter: 0,
-        transports,
-        deviceName,
-        challenge,
-      })
+      const registerRes = await API.post(
+        "/fingerprint/register",
+        {
+          credentialId,
+          publicKey,
+          counter: 0,
+          transports,
+          deviceName,
+          challenge,
+        },
+        { headers },
+      )
 
       setStep("success")
 

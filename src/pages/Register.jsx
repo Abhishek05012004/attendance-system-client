@@ -23,7 +23,6 @@ import {
 } from "lucide-react"
 import API from "../services/api"
 import FaceModal from "../components/face-modal"
-import FingerprintRegister from "../components/fingerprint-register"
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -99,12 +98,6 @@ export default function Register() {
       return
     }
 
-    if (!fingerprintData) {
-      toast.error("Fingerprint enrollment is required. Please scan your fingerprint to continue.")
-      setLoading(false)
-      return
-    }
-
     if (form.password !== form.confirmPassword) {
       toast.error("Passwords do not match")
       setLoading(false)
@@ -138,7 +131,6 @@ export default function Register() {
         role: form.role,
         adminCode: form.adminCode,
         ...(Array.isArray(faceEmbedding) ? { faceEmbedding, faceModelVersion: "face-api-0.22.2" } : {}),
-        ...(fingerprintData ? { fingerprintData } : {}),
       })
 
       toast.success("Registration request submitted successfully!")
@@ -527,24 +519,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Fingerprint Enrollment */}
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-blue-50">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Fingerprint Enrollment (Required)</p>
-                <p className="text-xs text-gray-600">
-                  Scan your fingerprint for easy login. This is required to complete registration.
-                </p>
-                {fingerprintData && <p className="text-xs text-green-600 mt-1">Fingerprint enrolled successfully.</p>}
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowFingerprint(true)}
-                className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700"
-              >
-                {fingerprintData ? "Re-enroll Fingerprint" : "Enroll Fingerprint"}
-              </button>
-            </div>
-
             {/* Face Enrollment */}
             <div className="flex items-center justify-between p-4 rounded-lg border bg-gray-50">
               <div>
@@ -564,18 +538,6 @@ export default function Register() {
                 {Array.isArray(faceEmbedding) ? "Retake Face" : "Enroll Face"}
               </button>
             </div>
-
-            {/* Fingerprint modal for registration */}
-            {showFingerprint && (
-              <FingerprintRegister
-                onClose={() => setShowFingerprint(false)}
-                onSuccess={(data) => {
-                  setFingerprintData(data)
-                  setShowFingerprint(false)
-                  toast.success("Fingerprint enrolled successfully!")
-                }}
-              />
-            )}
 
             {/* Face modal for registration */}
             {showFace && (
