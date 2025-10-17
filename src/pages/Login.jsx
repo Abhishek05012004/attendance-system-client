@@ -26,6 +26,10 @@ export default function Login() {
       login(res.data.token, res.data.user)
       toast.success("Login successful!")
 
+      if (!res.data.user.fingerprintEnrolled) {
+        toast.info("Please enroll your fingerprint for quick and secure login!")
+      }
+
       if (res.data.user.role === "admin") {
         navigate("/admin")
       } else {

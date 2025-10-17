@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Fingerprint, ArrowLeft, Loader, Check } from "lucide-react"
+import { Fingerprint, ArrowLeft, Loader, Check, X } from "lucide-react"
 import API from "../services/api"
 import { toast } from "react-toastify"
 
-export default function FingerprintRegister({ onClose, onSuccess }) {
+export default function FingerprintRegister({ onClose, onSuccess, isModal = false }) {
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState("device-name") // device-name, scanning, success
   const [deviceName, setDeviceName] = useState("")
@@ -25,6 +25,7 @@ export default function FingerprintRegister({ onClose, onSuccess }) {
       setChallenge(res.data.challenge)
       setStep("scanning")
     } catch (error) {
+      console.error("Enrollment error:", error)
       toast.error(error.response?.data?.error || "Failed to start enrollment")
     } finally {
       setLoading(false)
@@ -89,8 +90,13 @@ export default function FingerprintRegister({ onClose, onSuccess }) {
       })
 
       setStep("success")
+
       setTimeout(() => {
-        onSuccess()
+        onSuccess({
+          credentialId,
+          deviceName,
+          success: true,
+        })
       }, 2000)
     } catch (error) {
       console.error("Fingerprint capture error:", error)
@@ -101,17 +107,28 @@ export default function FingerprintRegister({ onClose, onSuccess }) {
     }
   }
 
-  return (
+  const content = (
     <div className="space-y-6">
       {step === "device-name" && (
         <>
-          <button
-            onClick={onClose}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
+          {isModal && (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Register Fingerprint</h2>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+          )}
+
+          {!isModal && (
+            <button
+              onClick={onClose}
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </button>
+          )}
 
           <div className="text-center">
             <div className="mx-auto h-16 w-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-4">
@@ -128,7 +145,7 @@ export default function FingerprintRegister({ onClose, onSuccess }) {
               value={deviceName}
               onChange={(e) => setDeviceName(e.target.value)}
               placeholder="e.g., My Laptop, Office PC"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-white"
             />
           </div>
 
@@ -193,4 +210,10 @@ export default function FingerprintRegister({ onClose, onSuccess }) {
       )}
     </div>
   )
+
+  if (isModal) {
+    return content
+  }
+
+  return content
 }

@@ -18,6 +18,7 @@ export default function FingerprintLogin({ email, onBack, onSuccess }) {
       setAllowCredentials(res.data.allowCredentials)
       return res.data
     } catch (error) {
+      console.error("Auth options error:", error)
       toast.error(error.response?.data?.error || "Failed to get authentication options")
       return null
     } finally {
