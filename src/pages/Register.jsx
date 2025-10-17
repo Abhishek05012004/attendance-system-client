@@ -23,7 +23,6 @@ import {
 } from "lucide-react"
 import API from "../services/api"
 import FaceModal from "../components/face-modal"
-import BiometricEnroll from "../components/BiometricEnroll"
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -44,7 +43,6 @@ export default function Register() {
   const [registrationSubmitted, setRegistrationSubmitted] = useState(false)
   const [showFace, setShowFace] = useState(false)
   const [faceEmbedding, setFaceEmbedding] = useState(null)
-  const [showBiometricEnroll, setShowBiometricEnroll] = useState(false)
   const navigate = useNavigate()
 
   const departments = [
@@ -538,21 +536,6 @@ export default function Register() {
               </button>
             </div>
 
-            {/* Biometric Enrollment */}
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-gray-50">
-              <div>
-                <p className="text-sm font-medium text-gray-900">Biometric Enrollment (Optional)</p>
-                <p className="text-xs text-gray-600">Enroll your biometric data for enhanced security.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowBiometricEnroll(true)}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-              >
-                {showBiometricEnroll ? "Retake Biometric" : "Enroll Biometric"}
-              </button>
-            </div>
-
             {/* Face modal for registration */}
             {showFace && (
               <FaceModal
@@ -566,17 +549,6 @@ export default function Register() {
                   }
                 }}
                 onVerified={null}
-              />
-            )}
-
-            {/* Biometric modal for registration */}
-            {showBiometricEnroll && (
-              <BiometricEnroll
-                open={showBiometricEnroll}
-                onClose={() => setShowBiometricEnroll(false)}
-                onEnrolled={(biometricData) => {
-                  // Handle biometric data enrollment
-                }}
               />
             )}
 
