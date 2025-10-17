@@ -28,7 +28,7 @@ function base64UrlToArrayBuffer(base64url) {
 
 export default function FingerprintRegister({ onClose, onSuccess, isModal = false, token = null }) {
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState("scanning")
+  const [step, setStep] = useState("ready")
   const [challenge, setChallenge] = useState(null)
   const [registrationOptions, setRegistrationOptions] = useState(null)
 
@@ -36,17 +36,17 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
     try {
       setLoading(true)
 
-      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      // Get registration options from backend
+      const res = await API.post("/fingerprint/register-options", {})
 
-      // Get registration options
-      const res = await API.post("/fingerprint/register-options", {}, { headers })
-
+      console.log("[v0] Registration options received:", res.data)
       setChallenge(res.data.challenge)
       setRegistrationOptions(res.data)
       setStep("scanning")
     } catch (error) {
-      console.error("Enrollment error:", error)
+      console.error("[v0] Enrollment error:", error)
       toast.error(error.response?.data?.error || "Failed to start enrollment")
+      setStep("ready")
     } finally {
       setLoading(false)
     }
@@ -107,20 +107,17 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
       const clientDataJSON = arrayBufferToBase64Url(credential.response.clientDataJSON)
       const transports = credential.response.getTransports ? credential.response.getTransports() : []
 
-      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      console.log("[v0] Sending fingerprint data to backend")
 
-      const registerRes = await API.post(
-        "/fingerprint/register",
-        {
-          credentialId,
-          attestationObject,
-          clientDataJSON,
-          transports,
-          challenge,
-        },
-        { headers },
-      )
+      const registerRes = await API.post("/fingerprint/register", {
+        credentialId,
+        attestationObject,
+        clientDataJSON,
+        transports,
+        challenge,
+      })
 
+      console.log("[v0] Fingerprint registered successfully:", registerRes.data)
       setStep("success")
 
       setTimeout(() => {
@@ -130,7 +127,7 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         })
       }, 2000)
     } catch (error) {
-      console.error("Fingerprint capture error:", error)
+      console.error("[v0] Fingerprint capture error:", error)
       toast.error(error.response?.data?.error || "Fingerprint enrollment failed")
       setStep("scanning")
     } finally {
@@ -140,11 +137,50 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
 
   const content = (
     <div className="space-y-6">
-      {step === "scanning" && (
+      {step === "ready" && (
         <>
           {isModal && (
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-gray-900">Enroll Fingerprint</h2>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+          )}
+
+          <div className="text-center">
+            <div className="mx-auto h-16 w-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-4">
+              <Fingerprint className="h-8 w-8 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Register Your Fingerprint</h3>
+            <p className="text-gray-600 text-sm">Add a fingerprint for quick and secure login</p>
+          </div>
+
+          <button
+            onClick={handleStartEnrollment}
+            disabled={loading}
+            className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+          >
+            {loading ? (
+              <>
+                <Loader className="h-4 w-4 animate-spin" />
+                Initializing...
+              </>
+            ) : (
+              <>
+                <Fingerprint className="h-4 w-4" />
+                Start Enrollment
+              </>
+            )}
+          </button>
+        </>
+      )}
+
+      {step === "scanning" && (
+        <>
+          {isModal && (
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">Scan Your Fingerprint</h2>
               <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                 <X className="h-6 w-6" />
               </button>
@@ -172,7 +208,7 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
             ) : (
               <>
                 <Fingerprint className="h-4 w-4" />
-                Start Scan
+                Capture Fingerprint
               </>
             )}
           </button>

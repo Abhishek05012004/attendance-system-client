@@ -3,12 +3,25 @@
 import { useEffect, useState, useRef } from "react"
 import { useAuth } from "../context/AuthContext"
 import { toast } from "react-toastify"
-import { Clock, Calendar, TrendingUp, CheckCircle, XCircle, Timer, User, Building, Briefcase, Info } from "lucide-react"
+import {
+  Clock,
+  Calendar,
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  Timer,
+  User,
+  Building,
+  Briefcase,
+  Info,
+  Fingerprint,
+} from "lucide-react"
 import API from "../services/api"
-import FaceModal from "../components/face-modal" // add FaceModal
+import FaceModal from "../components/face-modal"
+import FingerprintRegister from "../components/fingerprint-register"
 
 export default function Dashboard() {
-  const { user, updateUser } = useAuth() // need updateUser to set faceEnrolled after enrollment
+  const { user, updateUser } = useAuth()
   const [attendanceStatus, setAttendanceStatus] = useState({
     hasCheckedIn: false,
     hasCheckedOut: false,
@@ -23,18 +36,32 @@ export default function Dashboard() {
   })
   const [loading, setLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [showFace, setShowFace] = useState(false) // modal visibility
-  const [faceMode, setFaceMode] = useState("verify") // "verify" | "enroll"
-  const faceEmbeddingRef = useRef(null) // requires useRef import
+  const [showFace, setShowFace] = useState(false)
+  const [faceMode, setFaceMode] = useState("verify")
+  const faceEmbeddingRef = useRef(null)
+  const [showFingerprintModal, setShowFingerprintModal] = useState(false)
+  const [fingerprintNotificationShown, setFingerprintNotificationShown] = useState(false)
 
   useEffect(() => {
     fetchAttendanceStatus()
     fetchStats()
 
-    // Update time every second
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (user && !fingerprintNotificationShown && !user.fingerprintEnrolled) {
+      const timer = setTimeout(() => {
+        toast.info("📱 Enroll your fingerprint for quick and secure login!", {
+          position: "top-right",
+          autoClose: 5000,
+        })
+        setFingerprintNotificationShown(true)
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [user, fingerprintNotificationShown])
 
   const fetchAttendanceStatus = async () => {
     try {
@@ -116,7 +143,7 @@ export default function Dashboard() {
         clientLocalTime: clientNow.toLocaleTimeString("en-GB", { hour12: false }),
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         faceEmbedding: embedding,
-        location, // ensure lat/lng is sent
+        location,
       }
       console.log("[v0] Proceeding check-in with face verification")
       const response = await API.post("/attendance/checkin", payload)
@@ -146,7 +173,7 @@ export default function Dashboard() {
         clientLocalTime: clientNow.toLocaleTimeString("en-GB", { hour12: false }),
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         faceEmbedding: embedding,
-        location, // ensure lat/lng is sent
+        location,
       }
       console.log("[v0] Proceeding check-out with face verification")
       const response = await API.post("/attendance/checkout", payload)
@@ -203,9 +230,14 @@ export default function Dashboard() {
 
   const currentStatus = getCurrentStatus()
 
+  const handleFingerprintSuccess = () => {
+    setShowFingerprintModal(false)
+    updateUser({ ...user, fingerprintEnrolled: true })
+    toast.success("Fingerprint enrolled successfully! You can now login with your fingerprint.")
+  }
+
   return (
     <div className="space-y-6">
-      {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
@@ -221,9 +253,27 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {user && !user.fingerprintEnrolled && (
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Fingerprint className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-green-900">Enroll Your Fingerprint</h3>
+              <p className="text-sm text-green-700">Quick and secure login with your fingerprint</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowFingerprintModal(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+          >
+            Enroll Now
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Check In/Out Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Today's Attendance</h3>
@@ -292,7 +342,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Status Card */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Current Status</h3>
@@ -344,7 +393,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* CLARIFIED Statistics - Monthly Stats */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900">Monthly Statistics</h3>
@@ -411,7 +459,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Face Modal */}
       {showFace && (
         <FaceModal
           open={showFace}
@@ -420,20 +467,17 @@ export default function Dashboard() {
           onEnrolled={async (payload) => {
             try {
               if (payload && Array.isArray(payload)) {
-                // Not expected in dashboard (we enroll via API), but handle gracefully
                 await proceedCheckIn(payload)
                 updateUser({ ...user, faceEnrolled: true })
               } else if (payload && payload.embedding) {
                 await proceedCheckIn(payload.embedding)
                 updateUser({ ...user, faceEnrolled: true })
               } else {
-                // Fallback: show verify step (legacy)
                 setFaceMode("verify")
                 return
               }
               setShowFace(false)
             } catch (e) {
-              // if check-in fails, keep modal closed and show error from proceedCheckIn
               console.error("[v0] Inline enroll+checkin failed:", e)
             } finally {
               setLoading(false)
@@ -448,6 +492,18 @@ export default function Dashboard() {
             }
           }}
         />
+      )}
+
+      {showFingerprintModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <FingerprintRegister
+              onClose={() => setShowFingerprintModal(false)}
+              onSuccess={handleFingerprintSuccess}
+              isModal={true}
+            />
+          </div>
+        </div>
       )}
     </div>
   )
