@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { toast } from "react-toastify"
-import { Fingerprint, Trash2, Plus, AlertCircle, Loader } from "lucide-react"
+import { Fingerprint, Trash2, Plus, AlertCircle, Loader, Edit2 } from "lucide-react"
 import API from "../services/api"
 import BiometricEnroll from "../components/BiometricEnroll"
 
@@ -11,6 +11,8 @@ export default function BiometricSettings() {
   const [loading, setLoading] = useState(true)
   const [showEnroll, setShowEnroll] = useState(false)
   const [deleting, setDeleting] = useState(null)
+  const [editingId, setEditingId] = useState(null)
+  const [editName, setEditName] = useState("")
 
   useEffect(() => {
     fetchCredentials()
@@ -40,6 +42,23 @@ export default function BiometricSettings() {
       toast.error("Failed to remove credential")
     } finally {
       setDeleting(null)
+    }
+  }
+
+  const renameCredential = async (credentialId) => {
+    try {
+      if (!editName.trim()) {
+        toast.error("Name cannot be empty")
+        return
+      }
+      await API.put(`/biometric/credentials/${credentialId}`, { name: editName })
+      toast.success("Credential renamed successfully")
+      setEditingId(null)
+      setEditName("")
+      fetchCredentials()
+    } catch (error) {
+      console.error("Error renaming credential:", error)
+      toast.error("Failed to rename credential")
     }
   }
 
@@ -106,23 +125,62 @@ export default function BiometricSettings() {
                     key={cred.id}
                     className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
                   >
-                    <div className="flex items-center gap-3">
-                      <Fingerprint className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="font-medium text-gray-900">{cred.name}</p>
-                        <p className="text-sm text-gray-500">
-                          Added {new Date(cred.createdAt).toLocaleDateString()}
-                          {cred.lastUsed && ` • Last used ${new Date(cred.lastUsed).toLocaleDateString()}`}
-                        </p>
+                    <div className="flex items-center gap-3 flex-1">
+                      <Fingerprint className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                      <div className="flex-1">
+                        {editingId === cred.id ? (
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              className="flex-1 px-2 py-1 border border-gray-300 rounded"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() => renameCredential(cred.id)}
+                              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="px-3 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="font-medium text-gray-900">{cred.name}</p>
+                            <p className="text-sm text-gray-500">
+                              Added {new Date(cred.createdAt).toLocaleDateString()}
+                              {cred.lastUsed && ` • Last used ${new Date(cred.lastUsed).toLocaleDateString()}`}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <button
-                      onClick={() => deleteCredential(cred.id)}
-                      disabled={deleting === cred.id}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {editingId !== cred.id && (
+                        <button
+                          onClick={() => {
+                            setEditingId(cred.id)
+                            setEditName(cred.name)
+                          }}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Edit2 className="h-5 w-5" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteCredential(cred.id)}
+                        disabled={deleting === cred.id}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

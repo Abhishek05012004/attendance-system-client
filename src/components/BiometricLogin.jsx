@@ -105,7 +105,7 @@ export default function BiometricLogin() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 max-w-md mx-auto">
+    <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 border border-gray-100">
       <div className="flex items-center justify-center mb-6">
         <div className="bg-blue-100 p-4 rounded-full">
           <Fingerprint className="h-8 w-8 text-blue-600" />
