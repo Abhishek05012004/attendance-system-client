@@ -5,6 +5,27 @@ import { Fingerprint, ArrowLeft, Loader, Check, X } from "lucide-react"
 import API from "../services/api"
 import { toast } from "react-toastify"
 
+function arrayBufferToBase64Url(buffer) {
+  const bytes = new Uint8Array(buffer)
+  let binary = ""
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i])
+  }
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "")
+}
+
+function base64UrlToArrayBuffer(base64url) {
+  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/")
+  const padLen = (4 - (base64.length % 4)) % 4
+  const padded = base64 + "=".repeat(padLen)
+  const binary = atob(padded)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes.buffer
+}
+
 export default function FingerprintRegister({ onClose, onSuccess, isModal = false, token = null }) {
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState("device-name") // device-name, scanning, success
@@ -49,16 +70,17 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
         return
       }
 
+      const challengeBuffer = base64UrlToArrayBuffer(challenge)
+      const userIdBuffer = base64UrlToArrayBuffer(registrationOptions.user.id)
+
       const creationOptions = {
-        challenge: Uint8Array.from(atob(challenge.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0)),
+        challenge: new Uint8Array(challengeBuffer),
         rp: {
           name: "Employee Attendance System",
           id: window.location.hostname === "localhost" ? "localhost" : window.location.hostname,
         },
         user: {
-          id: Uint8Array.from(atob(registrationOptions.user.id.replace(/-/g, "+").replace(/_/g, "/")), (c) =>
-            c.charCodeAt(0),
-          ),
+          id: new Uint8Array(userIdBuffer),
           name: registrationOptions.user.name,
           displayName: registrationOptions.user.displayName,
         },
@@ -87,30 +109,32 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
 
       console.log("[v0] Credential created:", credential)
 
-      const credentialId = btoa(String.fromCharCode.apply(null, new Uint8Array(credential.id)))
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "")
+      const credentialId = arrayBufferToBase64Url(credential.id)
+      const attestationObject = arrayBufferToBase64Url(credential.response.attestationObject)
+      const clientDataJSON = arrayBufferToBase64Url(credential.response.clientDataJSON)
 
-      // Get public key in JWK format
-      const publicKeyJwk = credential.response.getPublicKey()
-        ? JSON.parse(
-            new TextDecoder().decode(
-              new Uint8Array(
-                await crypto.subtle.exportKey(
-                  "jwk",
-                  await crypto.subtle.importKey(
-                    "raw",
-                    credential.response.getPublicKey(),
-                    { name: "ECDSA", namedCurve: "P-256" },
-                    true,
-                    ["verify"],
-                  ),
-                ),
-              ),
-            ),
-          )
-        : null
+      // Extract public key
+      let publicKeyJwk = null
+      try {
+        const publicKeyBuffer = credential.response.getPublicKey()
+        if (publicKeyBuffer) {
+          const publicKeyAlgorithm = credential.response.getPublicKeyAlgorithm()
+          console.log("[v0] Public key algorithm:", publicKeyAlgorithm)
+
+          // For ECDSA (alg -7), use P-256 curve
+          const keyAlgorithm =
+            publicKeyAlgorithm === -7
+              ? { name: "ECDSA", namedCurve: "P-256" }
+              : { name: "RSASSA-PKCS1-v1_5", modulusLength: 2048, publicExponent: new Uint8Array([1, 0, 1]) }
+
+          const importedKey = await crypto.subtle.importKey("raw", publicKeyBuffer, keyAlgorithm, true, ["verify"])
+          const jwk = await crypto.subtle.exportKey("jwk", importedKey)
+          publicKeyJwk = jwk
+          console.log("[v0] Public key JWK:", publicKeyJwk)
+        }
+      } catch (keyError) {
+        console.warn("[v0] Could not extract public key:", keyError)
+      }
 
       const transports = credential.response.getTransports ? credential.response.getTransports() : []
 
@@ -118,11 +142,12 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
 
       console.log("[v0] Sending registration data to backend")
 
-      // Send to backend
       const registerRes = await API.post(
         "/fingerprint/register",
         {
           credentialId,
+          attestationObject,
+          clientDataJSON,
           publicKeyJwk: publicKeyJwk || {},
           counter: 0,
           transports,
