@@ -43,8 +43,6 @@ export default function Register() {
   const [registrationSubmitted, setRegistrationSubmitted] = useState(false)
   const [showFace, setShowFace] = useState(false)
   const [faceEmbedding, setFaceEmbedding] = useState(null)
-  const [showFingerprint, setShowFingerprint] = useState(false)
-  const [fingerprintData, setFingerprintData] = useState(null)
   const navigate = useNavigate()
 
   const departments = [
@@ -519,7 +517,6 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Face Enrollment */}
             <div className="flex items-center justify-between p-4 rounded-lg border bg-gray-50">
               <div>
                 <p className="text-sm font-medium text-gray-900">Face Enrollment (Required)</p>
