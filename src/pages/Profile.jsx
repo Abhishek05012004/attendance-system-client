@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import { toast } from "react-toastify"
-import { User, Mail, Phone, MapPin, Building, Briefcase, Calendar, Save } from "lucide-react"
+import { User, Mail, Phone, MapPin, Building, Briefcase, Calendar, Save, Fingerprint, Trash2, Plus } from "lucide-react"
 import API from "../services/api"
+import FingerprintRegister from "../components/fingerprint-register"
 
 export default function Profile() {
   const { user, updateUser } = useAuth()
@@ -17,6 +18,12 @@ export default function Profile() {
     position: "",
   })
   const [loading, setLoading] = useState(false)
+  const [showFingerprintModal, setShowFingerprintModal] = useState(false)
+  const [fingerprintData, setFingerprintData] = useState({
+    enrolled: false,
+    credentials: [],
+  })
+  const [fingerprintLoading, setFingerprintLoading] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -30,6 +37,22 @@ export default function Profile() {
       })
     }
   }, [user])
+
+  useEffect(() => {
+    fetchFingerprintData()
+  }, [])
+
+  const fetchFingerprintData = async () => {
+    try {
+      const res = await API.get("/fingerprint/list")
+      setFingerprintData({
+        enrolled: res.data.fingerprintEnrolled,
+        credentials: res.data.credentials || [],
+      })
+    } catch (error) {
+      console.error("Error fetching fingerprint data:", error)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -52,6 +75,29 @@ export default function Profile() {
     setProfile({ ...profile, [field]: value })
   }
 
+  const handleRemoveFingerprint = async (credentialId) => {
+    if (!window.confirm("Are you sure you want to remove this fingerprint?")) {
+      return
+    }
+
+    try {
+      setFingerprintLoading(true)
+      await API.delete(`/fingerprint/${credentialId}`)
+      toast.success("Fingerprint removed successfully!")
+      await fetchFingerprintData()
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to remove fingerprint")
+    } finally {
+      setFingerprintLoading(false)
+    }
+  }
+
+  const handleFingerprintSuccess = () => {
+    setShowFingerprintModal(false)
+    fetchFingerprintData()
+    toast.success("Fingerprint registered successfully!")
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -68,6 +114,75 @@ export default function Profile() {
             <p className="text-sm text-gray-500 capitalize">{user?.role}</p>
           </div>
         </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Fingerprint className="w-6 h-6 text-green-600" />
+            Fingerprint Authentication
+          </h2>
+          <button
+            onClick={() => setShowFingerprintModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Fingerprint
+          </button>
+        </div>
+
+        {showFingerprintModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+              <FingerprintRegister
+                onClose={() => setShowFingerprintModal(false)}
+                onSuccess={handleFingerprintSuccess}
+              />
+            </div>
+          </div>
+        )}
+
+        {fingerprintData.enrolled ? (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm text-green-800">
+                ✓ Fingerprint authentication is enabled. You can login using your fingerprint.
+              </p>
+            </div>
+
+            {fingerprintData.credentials.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-700">Registered Fingerprints:</h3>
+                {fingerprintData.credentials.map((cred) => (
+                  <div
+                    key={cred.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{cred.deviceName}</p>
+                      <p className="text-xs text-gray-500">
+                        Registered on {new Date(cred.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleRemoveFingerprint(cred.id)}
+                      disabled={fingerprintLoading}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-800">
+              No fingerprints registered yet. Click "Add Fingerprint" to enable fingerprint authentication.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Profile Form */}
