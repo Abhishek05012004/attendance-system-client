@@ -107,10 +107,11 @@ export default function FingerprintRegister({ onClose, onSuccess, isModal = fals
       const clientDataJSON = arrayBufferToBase64Url(credential.response.clientDataJSON)
       const transports = credential.response.getTransports ? credential.response.getTransports() : []
 
+      console.log("[v0] Credential ID:", credentialId)
       console.log("[v0] Sending fingerprint data to backend")
 
       const registerRes = await API.post("/fingerprint/register", {
-        credentialId,
+        credentialId: credentialId.trim(), // Ensure no whitespace
         attestationObject,
         clientDataJSON,
         transports,
