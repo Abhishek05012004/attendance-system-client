@@ -15,7 +15,7 @@ export default function Admin() {
         <thead className="bg-gray-200 text-left">
           <tr>
             <th className="p-3">Name</th>
-            <th className="p-3">Dat</th>
+            <th className="p-3">Date</th>
             <th className="p-3">Check In</th>
             <th className="p-3">Check Out</th>
           </tr>
